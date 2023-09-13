@@ -301,7 +301,7 @@ pub const LUA_TESTCASES: &[&str] = &[
 
 #[allow(dead_code)]
 pub const SDCARD_TESTCASES: &[&str] = &[
-    "./runtest.exe -w entry-static.exe socket",
+    // "./runtest.exe -w entry-static.exe socket",
     // "./time-test",
     // "./interrupts-test-1",
     // "./interrupts-test-2",
@@ -348,7 +348,7 @@ pub const SDCARD_TESTCASES: &[&str] = &[
     // "lmbench_all bw_mmap_rd -P 1 512k open2close /var/tmp/XXX",
     // "busybox echo context switch overhead",
     // "lmbench_all lat_ctx -P 1 -s 32 2 4 8 16 24 32 64 96",
-    // "busybox sh libctest_testcode.sh",
+    "busybox sh libctest_testcode.sh",
     // "busybox sh lua_testcode.sh",
     // "libc-bench",
     // "busybox sh ./netperf_testcode.sh",
