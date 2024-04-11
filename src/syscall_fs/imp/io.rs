@@ -14,6 +14,7 @@ use axprocess::link::{create_link, deal_with_path, real_path, AT_FDCWD};
 
 use crate::syscall_fs::ctype::{
     dir::new_dir,
+    epoll::{EpollCtl, EpollEvent, EpollEventType, EpollFile},
     file::{new_fd, new_inode},
     pipe::make_pipe,
 };
@@ -432,6 +433,20 @@ pub fn syscall_close(args: [usize; 6]) -> SyscallResult {
         return Err(SyscallError::EPERM);
     }
     // let file = process_inner.fd_manager.fd_table[fd].unwrap();
+    for i in 0..fd_table.len() {
+        if let Some(file) = fd_table[i].as_ref() {
+            if let Some(epoll_file) = file.as_any().downcast_ref::<EpollFile>() {
+                if epoll_file.contains(fd as i32) {
+                    let ev = EpollEvent {
+                        event_type: EpollEventType::EPOLLMSG,
+                        data: 0,
+                    };
+                    epoll_file.epoll_ctl(EpollCtl::DEL, fd as i32, ev)?;
+                }
+            }
+        }
+    }
+
     fd_table[fd] = None;
     // for i in 0..process_inner.fd_table.len() {
     //     if let Some(file) = process_inner.fd_table[i].as_ref() {
