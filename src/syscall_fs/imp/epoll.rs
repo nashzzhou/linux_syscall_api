@@ -1,6 +1,6 @@
 //! The epoll API performs a similar task to poll: monitoring
 //! multiple file descriptors to see if I/O is possible on any of
-//! them.  
+//! them.
 extern crate alloc;
 use crate::{SyscallError, SyscallResult};
 use alloc::sync::Arc;
@@ -96,15 +96,17 @@ pub fn syscall_epoll_wait(args: [usize; 6]) -> SyscallResult {
         return Err(SyscallError::EFAULT);
     }
 
-    let fd_table = process.fd_manager.fd_table.lock();
-    let epoll_file = if let Some(file) = fd_table[epfd as usize].as_ref() {
-        if let Some(epoll_file) = file.as_any().downcast_ref::<EpollFile>() {
-            epoll_file.clone()
+    let epoll_file = {
+        let fd_table = process.fd_manager.fd_table.lock();
+        if let Some(file) = fd_table[epfd as usize].as_ref() {
+            if let Some(epoll_file) = file.as_any().downcast_ref::<EpollFile>() {
+                epoll_file.clone()
+            } else {
+                return Err(SyscallError::EBADF);
+            }
         } else {
             return Err(SyscallError::EBADF);
         }
-    } else {
-        return Err(SyscallError::EBADF);
     };
 
     let timeout = if timeout > 0 {
