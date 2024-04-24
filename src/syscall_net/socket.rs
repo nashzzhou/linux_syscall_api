@@ -12,13 +12,13 @@ use axfs::api::{FileIO, FileIOType, OpenFlags, Read, Write};
 
 use axlog::warn;
 use axnet::{
-    from_core_sockaddr, into_core_sockaddr, poll_interfaces, IpAddr, SocketAddr, TcpSocket,
-    UdpSocket,
+    add_membership, from_core_sockaddr, into_core_sockaddr, poll_interfaces, IpAddr, SocketAddr,
+    TcpSocket, UdpSocket,
 };
 use axsync::Mutex;
 use num_enum::TryFromPrimitive;
 
-use crate::TimeVal;
+use crate::{SyscallError, SyscallResult, TimeVal};
 
 pub const SOCKET_TYPE_MASK: usize = 0xFF;
 
@@ -70,6 +70,16 @@ pub enum SocketOptionLevel {
 #[derive(TryFromPrimitive, Debug)]
 #[repr(usize)]
 #[allow(non_camel_case_types)]
+pub enum IpOption {
+    IP_MULTICAST_IF = 32,
+    IP_MULTICAST_TTL = 33,
+    IP_MULTICAST_LOOP = 34,
+    IP_ADD_MEMBERSHIP = 35,
+}
+
+#[derive(TryFromPrimitive, Debug)]
+#[repr(usize)]
+#[allow(non_camel_case_types)]
 pub enum SocketOption {
     SO_REUSEADDR = 2,
     SO_ERROR = 4,
@@ -78,6 +88,7 @@ pub enum SocketOption {
     SO_RCVBUF = 8,
     SO_KEEPALIVE = 9,
     SO_RCVTIMEO = 20,
+    SO_SNDTIMEO = 21,
 }
 
 #[derive(TryFromPrimitive, PartialEq)]
@@ -90,18 +101,47 @@ pub enum TcpSocketOption {
     TCP_CONGESTION = 13,
 }
 
+impl IpOption {
+    pub fn set(&self, socket: &Socket, opt: &[u8]) -> SyscallResult {
+        match self {
+            IpOption::IP_MULTICAST_IF => {
+                // 我们只会使用LOOPBACK作为多播接口
+                Ok((0))
+            }
+            IpOption::IP_MULTICAST_TTL => {
+                let mut inner = socket.inner.lock();
+                match &mut *inner {
+                    SocketInner::Udp(s) => {
+                        let ttl = u8::from_ne_bytes(<[u8; 1]>::try_from(&opt[0..1]).unwrap());
+                        s.set_socket_ttl(ttl as u8);
+                        Ok((0))
+                    }
+                    _ => panic!("setsockopt IP_MULTICAST_TTL on a non-udp socket"),
+                }
+            }
+            IpOption::IP_MULTICAST_LOOP => Ok((0)),
+            IpOption::IP_ADD_MEMBERSHIP => {
+                let multicast_addr = IpAddr::v4(opt[0], opt[1], opt[2], opt[3]);
+                let interface_addr = IpAddr::v4(opt[4], opt[5], opt[6], opt[7]);
+                // TODO add membership error handling
+                add_membership(multicast_addr, interface_addr);
+                Ok((0))
+            }
+        }
+    }
+}
+
 impl SocketOption {
-    pub fn set(&self, socket: &Socket, opt: &[u8]) {
+    pub fn set(&self, socket: &Socket, opt: &[u8]) -> SyscallResult {
         match self {
             SocketOption::SO_REUSEADDR => {
+                // unimplemented!("wait for implementation of SO_REUSEADDR");
                 if opt.len() < 4 {
                     panic!("can't read a int from socket opt value");
                 }
-
                 let opt_value = i32::from_ne_bytes(<[u8; 4]>::try_from(&opt[0..4]).unwrap());
-
                 socket.set_reuse_addr(opt_value != 0);
-                // socket.reuse_addr = opt_value != 0;
+                Ok((0))
             }
             SocketOption::SO_DONTROUTE => {
                 if opt.len() < 4 {
@@ -112,6 +152,7 @@ impl SocketOption {
 
                 socket.set_reuse_addr(opt_value != 0);
                 // socket.reuse_addr = opt_value != 0;
+                Ok((0))
             }
             SocketOption::SO_SNDBUF => {
                 if opt.len() < 4 {
@@ -122,6 +163,7 @@ impl SocketOption {
 
                 socket.set_send_buf_size(opt_value as u64);
                 // socket.send_buf_size = opt_value as usize;
+                Ok((0))
             }
             SocketOption::SO_RCVBUF => {
                 if opt.len() < 4 {
@@ -132,6 +174,7 @@ impl SocketOption {
 
                 socket.set_recv_buf_size(opt_value as u64);
                 // socket.recv_buf_size = opt_value as usize;
+                Ok((0))
             }
             SocketOption::SO_KEEPALIVE => {
                 if opt.len() < 4 {
@@ -162,6 +205,7 @@ impl SocketOption {
                 drop(inner);
                 socket.set_recv_buf_size(opt_value as u64);
                 // socket.recv_buf_size = opt_value as usize;
+                Ok((0))
             }
             SocketOption::SO_RCVTIMEO => {
                 if opt.len() < size_of::<TimeVal>() {
@@ -174,10 +218,12 @@ impl SocketOption {
                 } else {
                     Some(timeout)
                 });
+                Ok((0))
             }
             SocketOption::SO_ERROR => {
                 panic!("can't set SO_ERROR");
             }
+            SocketOption::SO_SNDTIMEO => Err(SyscallError::EPERM),
         }
     }
 
@@ -281,6 +327,9 @@ impl SocketOption {
             }
             SocketOption::SO_ERROR => {
                 // 当前没有存储错误列表，因此不做处理
+            }
+            SocketOption::SO_SNDTIMEO => {
+                panic!("unimplemented!")
             }
         }
     }
