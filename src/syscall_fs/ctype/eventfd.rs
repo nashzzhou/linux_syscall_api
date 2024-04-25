@@ -142,10 +142,10 @@ impl FileIO for EventFd {
     fn get_status(&self) -> OpenFlags {
         let mut status = OpenFlags::RDWR;
         if self.flags & EventFdFlag::EFD_NONBLOCK.bits() != 0 {
-            status &= OpenFlags::NON_BLOCK;
+            status |= OpenFlags::NON_BLOCK;
         }
         if self.flags & EventFdFlag::EFD_CLOEXEC.bits() != 0 {
-            status &= OpenFlags::CLOEXEC;
+            status |= OpenFlags::CLOEXEC;
         }
 
         status
