@@ -18,6 +18,7 @@ pub enum MemSyscallId {
     SHMAT = 196,
     BRK = 214,
     MUNMAP = 215,
+    MREMAP = 216,
     MMAP = 222,
     MSYNC = 227,
     MPROTECT = 226,
