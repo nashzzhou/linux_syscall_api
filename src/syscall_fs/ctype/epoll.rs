@@ -150,8 +150,8 @@ impl EpollFile {
         let mut ret_events = Vec::new();
         loop {
             let current_process = current_process();
-            let fd_table = current_process.fd_manager.fd_table.lock();
             for req_event in events.iter() {
+                let fd_table = current_process.fd_manager.fd_table.lock();
                 if let Some(file) = &fd_table[req_event.data as usize] {
                     let mut ret_event_type = EpollEventType::empty();
                     if file.is_hang_up() {
