@@ -481,8 +481,7 @@ pub fn syscall_set_sock_opt(args: [usize; 6]) -> SyscallResult {
                 return Ok(0);
             };
 
-            option.set(socket, opt);
-            Ok(0)
+            option.set(socket, opt)
         }
     }
 }

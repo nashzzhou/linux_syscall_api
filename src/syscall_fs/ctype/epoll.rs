@@ -44,6 +44,9 @@ pub struct EpollEvent {
     pub event_type: EpollEventType,
     /// 事件中使用到的数据，如fd等
     pub data: u64,
+    pub fd: i32,
+    pub data_u32: u32,
+    pub data_u64: u64,
 }
 
 numeric_enum_macro::numeric_enum! {
@@ -105,7 +108,9 @@ impl EpollFile {
             // 添加事件
             EpollCtl::ADD => {
                 if inner.monitor_list.contains_key(&fd) {
-                    return Err(SyscallError::EEXIST);
+                    // return Err(SyscallError::EEXIST);
+                    // TODO : fd close callback ?
+                    inner.monitor_list.insert(fd, event);
                 }
                 inner.monitor_list.insert(fd, event);
             }
@@ -181,6 +186,9 @@ impl EpollFile {
                     ret_events.push(EpollEvent {
                         event_type: EpollEventType::EPOLLERR,
                         data: req_event.data,
+                        fd: -1,
+                        data_u32: 0,
+                        data_u64: 0,
                     });
                 }
             }

@@ -1,6 +1,7 @@
 use axfs::api::FileIO;
 use axhal::{mem::VirtAddr, time::current_ticks};
 use axprocess::{current_process, yield_now_task};
+use axsignal::signal_no::SignalNo;
 use bitflags::bitflags;
 extern crate alloc;
 use crate::{SyscallError, SyscallResult, TimeSecs, TimeVal};
@@ -397,9 +398,12 @@ pub fn syscall_pselect6(args: [usize; 6]) -> SyscallResult {
         if current_ticks() as usize > expire_time {
             return Ok(0);
         }
+        // TODO: fix this and use mask to ignore specific signal
         #[cfg(feature = "signal")]
-        if process.have_signals().is_some() {
-            return Err(SyscallError::EINTR);
+        if let Some(signalno) = process.have_signals() {
+            if signalno == SignalNo::SIGKILL as usize {
+                return Err(SyscallError::EINTR);
+            }
         }
     }
 }
