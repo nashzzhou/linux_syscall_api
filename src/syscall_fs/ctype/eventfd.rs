@@ -155,6 +155,7 @@ impl FileIO for EventFd {
 #[cfg(test)]
 mod tests {
     use super::EventFd;
+    use axerrno::AxError;
     use axfs::api::FileIO;
 
     #[test]
@@ -179,7 +180,9 @@ mod tests {
     fn test_write() {
         let event_fd = EventFd::new(42, 0);
         let val = 12u64;
-        event_fd.write(&val.to_ne_bytes()[0..core::mem::size_of::<u64>()]);
+        event_fd
+            .write(&val.to_ne_bytes()[0..core::mem::size_of::<u64>()])
+            .unwrap();
 
         let event_fd_val = 0u64;
         event_fd.read(&mut event_fd_val.to_ne_bytes()).unwrap();

@@ -1,7 +1,6 @@
-use axtask::current;
+use core::mem::size_of;
 /// 处理与任务（线程）有关的系统调用
 use core::time::Duration;
-use core::{mem::size_of, ptr::slice_from_raw_parts_mut};
 
 use axconfig::TASK_STACK_SIZE;
 use axhal::time::current_time;
@@ -18,8 +17,8 @@ use axsync::Mutex;
 //     AxTaskRef,
 // };
 use crate::{
-    CloneArgs, PrctlOption, RLimit, SyscallError, SyscallResult, TimeSecs, WaitFlags, PR_NAME_SIZE,
-    RLIMIT_AS, RLIMIT_NOFILE, RLIMIT_STACK,
+    CloneArgs, RLimit, SyscallError, SyscallResult, TimeSecs, WaitFlags, RLIMIT_AS, RLIMIT_NOFILE,
+    RLIMIT_STACK,
 };
 use axlog::{info, warn};
 use axtask::TaskId;
@@ -251,6 +250,7 @@ pub fn syscall_clone3(args: [usize; 6]) -> SyscallResult {
 }
 
 /// 创建一个子进程，挂起父进程，直到子进程exec或者exit，父进程才继续执行
+#[cfg(target_arch = "x86_64")]
 pub fn syscall_vfork() -> SyscallResult {
     let args: [usize; 6] = [0x4011, 0, 0, 0, 0, 0];
     syscall_clone(args)
@@ -552,6 +552,7 @@ pub fn syscall_arch_prctl(args: [usize; 6]) -> SyscallResult {
 }
 
 /// To implement the fork syscall for x86_64
+#[cfg(target_arch = "x86_64")]
 pub fn syscall_fork() -> SyscallResult {
     warn!("transfer syscall_fork to syscall_clone");
     let args = [1, 0, 0, 0, 0, 0];
@@ -562,13 +563,16 @@ pub fn syscall_fork() -> SyscallResult {
 /// # Arguments
 /// * `option` - usize
 /// * `arg2` - *mut u8
+#[cfg(target_arch = "x86_64")]
 pub fn syscall_prctl(args: [usize; 6]) -> SyscallResult {
+    use crate::{PrctlOption, PR_NAME_SIZE};
+
     let option = args[0];
     let arg2 = args[1] as *mut u8;
     match PrctlOption::try_from(option) {
         Ok(PrctlOption::PR_GET_NAME) => {
             // 获取进程名称。
-            let mut process_name = current().name().to_string();
+            let mut process_name = current_task().name().to_string();
             process_name += "\0";
             // [syscall 定义](https://man7.org/linux/man-pages/man2/prctl.2.html)要求 NAME 应该不超过 16 Byte
             process_name.truncate(PR_NAME_SIZE);
@@ -579,7 +583,7 @@ pub fn syscall_prctl(args: [usize; 6]) -> SyscallResult {
             // 直接访问前需要确保地址已经被分配
             {
                 unsafe {
-                    let name = &mut *slice_from_raw_parts_mut(arg2, PR_NAME_SIZE);
+                    let name = &mut *core::ptr::slice_from_raw_parts_mut(arg2, PR_NAME_SIZE);
                     name[..process_name.len()].copy_from_slice(process_name.as_bytes());
                 }
                 Ok(0)

@@ -13,8 +13,6 @@ use axprocess::{
     link::{deal_with_path, FilePath, AT_FDCWD},
 };
 
-use super::{syscall_unlinkat, AT_REMOVEDIR};
-
 extern crate alloc;
 use alloc::string::ToString;
 
@@ -102,6 +100,7 @@ pub fn syscall_mkdirat(args: [usize; 6]) -> SyscallResult {
 /// * `mode`: u32, 文件的所有权描述。详见`man 7 inode `。
 /// # Return
 /// 成功执行,返回0。失败,返回-1。
+#[cfg(target_arch = "x86_64")]
 pub fn syscall_mkdir(args: [usize; 6]) -> SyscallResult {
     let path = args[0];
     let mode = args[1];
@@ -341,6 +340,7 @@ pub fn syscall_renameat2(args: [usize; 6]) -> SyscallResult {
 /// * `old_path`: *const u8
 /// * `new_path`: *const u8
 /// To rename the file from old_path to new_path
+#[cfg(target_arch = "x86_64")]
 pub fn syscall_rename(args: [usize; 6]) -> SyscallResult {
     let old_path = args[0];
     let new_path = args[1];
@@ -536,6 +536,7 @@ pub fn syscall_faccessat(args: [usize; 6]) -> SyscallResult {
 /// # Arguments
 /// * `path`: *const u8, 文件的路径
 /// * `mode`: usize, 文件的权限
+#[cfg(target_arch = "x86_64")]
 pub fn syscall_access(args: [usize; 6]) -> SyscallResult {
     let path = args[0];
     let mode = args[1];
@@ -548,10 +549,13 @@ pub fn syscall_access(args: [usize; 6]) -> SyscallResult {
 /// 删除目录
 /// # Arguments
 /// * `path`: *const u8, 文件的路径
+#[cfg(target_arch = "x86_64")]
 pub fn syscall_rmdir(args: [usize; 6]) -> SyscallResult {
+    use super::AT_REMOVEDIR;
+
     let path = args[0];
     let temp_args = [AT_FDCWD, path, AT_REMOVEDIR, 0, 0, 0];
-    syscall_unlinkat(temp_args)
+    super::syscall_unlinkat(temp_args)
 }
 
 /// 88

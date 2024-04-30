@@ -547,6 +547,7 @@ pub fn normal_file_mode(file_type: StMode) -> StMode {
 }
 
 /// prctl 中 PR_NAME_SIZE 要求的缓冲区长度
+#[allow(unused)]
 pub const PR_NAME_SIZE: usize = 16;
 
 numeric_enum_macro::numeric_enum! {

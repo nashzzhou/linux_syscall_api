@@ -95,6 +95,7 @@ pub fn syscall_fstatat(args: [usize; 6]) -> SyscallResult {
 /// # Arguments
 /// * `path` - *const u8
 /// * `kst` - *mut Kstat
+#[cfg(target_arch = "x86_64")]
 pub fn syscall_lstat(args: [usize; 6]) -> SyscallResult {
     let path = args[0];
     let kst = args[1];
@@ -106,6 +107,7 @@ pub fn syscall_lstat(args: [usize; 6]) -> SyscallResult {
 /// # Arguments
 /// * `path` - *const u8
 /// * `stat_ptr` - *mut Kstat
+#[cfg(target_arch = "x86_64")]
 pub fn syscall_stat(args: [usize; 6]) -> SyscallResult {
     let path = args[0];
     let stat_ptr = args[1];

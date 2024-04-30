@@ -49,6 +49,7 @@ pub fn sys_linkat(args: [usize; 6]) -> SyscallResult {
 /// * `path`: *const u8, 要删除的链接的名字。
 /// # Return
 /// 成功执行,返回0。失败,返回-1。
+#[cfg(target_arch = "x86_64")]
 pub fn syscall_unlink(args: [usize; 6]) -> SyscallResult {
     let path = args[0] as *const u8;
     let temp_args = [axprocess::link::AT_FDCWD, path as usize, 0, 0, 0, 0];
