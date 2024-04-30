@@ -92,5 +92,11 @@ pub fn fs_syscall(syscall_id: fs_syscall_id::FsSyscallId, args: [usize; 6]) -> S
         READLINK => syscall_readlink(args),
         #[cfg(target_arch = "x86_64")]
         CREAT => Err(axerrno::LinuxError::EPERM),
+        #[cfg(target_arch = "x86_64")]
+        EPOLL_CREATE1 => unimplemented!("epoll_create1"),
+        #[cfg(target_arch = "x86_64")]
+        EPOLL_PWAIT => unimplemented!("epoll_ctl"),
+        #[cfg(target_arch = "x86_64")]
+        CHMOD => Ok(0),
     }
 }

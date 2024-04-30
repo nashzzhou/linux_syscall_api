@@ -459,15 +459,21 @@ pub fn syscall_set_sock_opt(args: [usize; 6]) -> SyscallResult {
     let opt = unsafe { from_raw_parts(opt_value, opt_len as usize) };
 
     match level {
-        SocketOptionLevel::IP => Ok(0),
+        SocketOptionLevel::IP => {
+            let Ok(option) = IpOption::try_from(opt_name) else {
+                warn!("[setsockopt()] option {opt_name} not supported in socket level");
+                return Ok(0);
+            };
+
+            option.set(socket, opt)
+        }
         SocketOptionLevel::Socket => {
             let Ok(option) = SocketOption::try_from(opt_name) else {
                 warn!("[setsockopt()] option {opt_name} not supported in socket level");
                 return Ok(0);
             };
 
-            option.set(socket, opt);
-            Ok(0)
+            option.set(socket, opt)
         }
         SocketOptionLevel::Tcp => {
             let Ok(option) = TcpSocketOption::try_from(opt_name) else {
@@ -475,8 +481,7 @@ pub fn syscall_set_sock_opt(args: [usize; 6]) -> SyscallResult {
                 return Ok(0);
             };
 
-            option.set(socket, opt);
-            Ok(0)
+            option.set(socket, opt)
         }
     }
 }

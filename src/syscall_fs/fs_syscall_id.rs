@@ -115,6 +115,7 @@ numeric_enum_macro::numeric_enum! {
         SELECT = 23,
         PSELECT6 = 270,
         READLINK = 89,
+        CHMOD = 90,
         PREADLINKAT = 267,
         FSTAT = 5,
         LSTAT = 6,
@@ -124,5 +125,7 @@ numeric_enum_macro::numeric_enum! {
         RENAMEAT = 264,
         RENAMEAT2 = 316,
         COPYFILERANGE = 326,
+        EPOLL_CREATE1 = 291,
+        EPOLL_PWAIT = 281,
     }
 }
