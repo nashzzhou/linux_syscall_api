@@ -83,6 +83,7 @@ numeric_enum_macro::numeric_enum! {
         FCNTL64 = 72,
         IOCTL = 16,
         MKDIRAT = 258,
+        SYMLINKAT = 266,
         RENAME = 82,
         MKDIR = 83,
         RMDIR = 84,
