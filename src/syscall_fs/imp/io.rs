@@ -445,9 +445,6 @@ pub fn syscall_close(args: [usize; 6]) -> SyscallResult {
                     let ev = EpollEvent {
                         event_type: EpollEventType::EPOLLMSG,
                         data: 0,
-                        fd: -1,
-                        data_u32: 0,
-                        data_u64: 0,
                     };
                     epoll_file.epoll_ctl(EpollCtl::DEL, fd as i32, ev)?;
                 }

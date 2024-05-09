@@ -3,8 +3,6 @@ use axlog::info;
 
 #[no_mangle]
 pub fn syscall(syscall_id: usize, args: [usize; 6]) -> isize {
-    #[cfg(feature = "futex")]
-    crate::syscall_task::check_dead_wait();
     #[allow(unused_mut, unused_assignments)]
     let mut ans: Option<SyscallResult> = None;
 
