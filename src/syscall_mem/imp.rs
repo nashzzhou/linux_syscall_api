@@ -1,4 +1,4 @@
-use crate::{syscall_fs::FileDesc, MMAPFlags, SyscallError, SyscallResult, MMAPPROT};
+use crate::{syscall_fs::FileDesc, MMAPFlags, MREMAPFlags, SyscallError, SyscallResult, MMAPPROT};
 extern crate alloc;
 
 use axhal::{arch::flush_tlb, mem::VirtAddr, paging::MappingFlags};
@@ -145,6 +145,90 @@ pub fn syscall_mprotect(args: [usize; 6]) -> SyscallResult {
     Ok(0)
 }
 
+/// # Arguments
+/// * `old_addr` - usize
+/// * `old_size` - usize
+/// * `new_size` - usize
+/// * `flags` - usize
+/// * `new_addr` - usize
+pub fn syscall_mremap(args: [usize; 6]) -> SyscallResult {
+    use axlog::info;
+
+    let old_addr = args[0];
+    let old_size = args[1];
+    let new_size = args[2];
+    let flags = args[3];
+    let new_addr = args[4];
+
+    info!(
+        "[mremap] old_addr: 0x{:x}, old_size: 0x{:x}, new_size: 0x{:x}, flags: {}, new_addr: {}",
+        old_addr, old_size, new_size, flags, new_addr,
+    );
+
+    // old_addr must be aligned
+    // new_size must be greater than 0
+    if !(VirtAddr::from(old_addr).is_aligned_4k()) || new_size == 0 {
+        return Err(SyscallError::EINVAL);
+    };
+
+    // (new_addr, new_addr + size) must not overlap with (old_addr, old_addr + old_size)
+    if !(new_addr + new_size <= old_addr || new_addr >= old_addr + old_size) {
+        return Err(SyscallError::EINVAL);
+    };
+
+    let flags = MREMAPFlags::from_bits_truncate(args[3] as u32);
+    let maymove = flags.contains(MREMAPFlags::MREMAP_MAYMOVE);
+    let fixed = flags.contains(MREMAPFlags::MREMAP_FIXED);
+    let dontunmap = flags.contains(MREMAPFlags::MREMAP_DONTUNMAP);
+
+    // MREMAP_FIXED was specified without MREMAP_MAYMOVE
+    if fixed && !maymove {
+        return Err(SyscallError::EINVAL);
+    };
+
+    // MREMAP_DONTUNMAP was specified without MREMAP_MAYMOVE
+    if dontunmap && !maymove {
+        return Err(SyscallError::EINVAL);
+    };
+
+    // MREMAP_DONTUNMAP was specified with a size change
+    if dontunmap && old_size != new_size {
+        return Err(SyscallError::EINVAL);
+    };
+
+    // old_size was 0 and MREMAP_MAYMOVE was not specified
+    if old_size == 0 && !maymove {
+        return Err(SyscallError::EINVAL);
+    };
+
+    // MREMAP_FIXED is not implemented
+    if fixed {
+        unimplemented!();
+    }
+
+    let process = current_process();
+    let old_start: VirtAddr = old_addr.into();
+    if old_size > new_size {
+        let old_end = old_start + new_size;
+        process
+            .memory_set
+            .lock()
+            .lock()
+            .munmap(old_end, old_size - new_size);
+        flush_tlb(None);
+
+        return Ok(old_start.as_usize() as isize);
+    }
+
+    // Only deal with MREMAP_MAYMOVE now
+    let new_addr = process
+        .memory_set
+        .lock()
+        .lock()
+        .mremap(old_start, old_size, new_size);
+    flush_tlb(None);
+    Ok(new_addr)
+}
 const IPC_PRIVATE: i32 = 0;
 
 bitflags! {

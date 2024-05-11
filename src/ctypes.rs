@@ -169,6 +169,20 @@ bitflags! {
     }
 }
 
+bitflags! {
+    #[derive(Debug)]
+    /// 指定 mremap 的选项
+    pub struct MREMAPFlags: u32 {
+        /// 允许将映射重新定位到新地址
+        const MREMAP_MAYMOVE = 1 << 0;
+        /// 指定映射必须移动到的页面对齐地址，必须和MREMAP_MAYMOVE一起使用
+        const MREMAP_FIXED = 1 << 1;
+
+        /// 将映射重新映射到新地址，但不会取消旧地址的映射，必须和MREMAP_MAYMOVE一起使用
+        const MREMAP_DONTUNMAP = 1 << 2;
+    }
+}
+
 /// sys_uname 中指定的结构体类型
 #[repr(C)]
 pub struct UtsName {
