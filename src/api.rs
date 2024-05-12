@@ -12,6 +12,8 @@ use axtask::{TaskId, EXITED_TASKS};
 
 use axfs::api::OpenFlags;
 
+use crate::syscall_task::syscall_kill;
+
 /// 在完成一次系统调用之后，恢复全局目录
 pub fn init_current_dir() {
     axfs::api::set_current_dir("/").expect("reset current dir failed");
@@ -24,20 +26,27 @@ pub type FileFlags = OpenFlags;
 pub fn recycle_user_process() {
     let kernel_process = Arc::clone(PID2PC.lock().get(&KERNEL_PROCESS_ID).unwrap());
 
-    loop {
-        let pid2pc = PID2PC.lock();
+    let childrens_num = kernel_process.children.lock().len();
 
-        kernel_process
-            .children
-            .lock()
-            .retain(|x| x.pid() == KERNEL_PROCESS_ID || pid2pc.contains_key(&x.pid()));
-        let all_finished = pid2pc.len() == 1;
-        drop(pid2pc);
-        if all_finished {
-            break;
+    for index in 0..childrens_num {
+        let children = kernel_process.children.lock().get(index).unwrap().clone();
+        let pid = children.pid();
+        if pid != KERNEL_PROCESS_ID {
+            // kill the process
+            let args: [usize; 6] = [pid as usize, 9, 0, 0, 0, 0];
+            let _ = syscall_kill(args);
+            yield_now_task();
         }
-        yield_now_task();
     }
+
+    let pid2pc = PID2PC.lock();
+    kernel_process
+        .children
+        .lock()
+        .retain(|x| x.pid() == KERNEL_PROCESS_ID || pid2pc.contains_key(&x.pid()));
+
+    drop(pid2pc);
+
     TaskId::clear();
     unsafe {
         write_page_table_root(KERNEL_PAGE_TABLE.root_paddr());
