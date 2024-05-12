@@ -26,10 +26,8 @@ extern crate alloc;
 
 use alloc::{string::ToString, sync::Arc, vec::Vec};
 
-#[cfg(feature = "signal")]
 use axsignal::signal_no::SignalNo;
 
-#[cfg(feature = "signal")]
 use axprocess::signal::SignalModule;
 // pub static TEST_FILTER: Mutex<BTreeMap<String, usize>> = Mutex::new(BTreeMap::new());
 
@@ -189,18 +187,11 @@ pub fn syscall_clone(args: [usize; 6]) -> SyscallResult {
         Some(user_stack)
     };
     let curr_process = current_process();
-    #[cfg(feature = "signal")]
+
     let sig_child = SignalNo::from(flags & 0x3f) == SignalNo::SIGCHLD;
 
-    if let Ok(new_task_id) = curr_process.clone_task(
-        clone_flags,
-        stack,
-        ptid,
-        tls,
-        ctid,
-        #[cfg(feature = "signal")]
-        sig_child,
-    ) {
+    if let Ok(new_task_id) = curr_process.clone_task(clone_flags, stack, ptid, tls, ctid, sig_child)
+    {
         Ok(new_task_id as isize)
     } else {
         Err(SyscallError::ENOMEM)
@@ -230,7 +221,7 @@ pub fn syscall_clone3(args: [usize; 6]) -> SyscallResult {
     } else {
         Some(args.stack as usize)
     };
-    #[cfg(feature = "signal")]
+
     let sig_child = SignalNo::from(args.exit_signal as usize & 0x3f) == SignalNo::SIGCHLD;
 
     warn!("stack size  {}", args.stack_size);
@@ -240,7 +231,6 @@ pub fn syscall_clone3(args: [usize; 6]) -> SyscallResult {
         args.parent_tid as usize,
         args.tls as usize,
         args.child_tid as usize,
-        #[cfg(feature = "signal")]
         sig_child,
     ) {
         Ok(new_task_id as isize)
@@ -253,7 +243,12 @@ pub fn syscall_clone3(args: [usize; 6]) -> SyscallResult {
 #[cfg(target_arch = "x86_64")]
 pub fn syscall_vfork() -> SyscallResult {
     let args: [usize; 6] = [0x4011, 0, 0, 0, 0, 0];
-    syscall_clone(args)
+    // TODO: check the correctness
+    syscall_clone(args).map(|new_task_id| {
+        let task_ref = axprocess::get_task_ref(new_task_id as u64).unwrap();
+        axtask::vfork_suspend(&task_ref);
+        new_task_id
+    })
 }
 
 /// 等待子进程完成任务，若子进程没有完成，则自身yield
@@ -283,7 +278,7 @@ pub fn syscall_wait4(args: [usize; 6]) -> SyscallResult {
                             return Ok(0);
                         } else {
                             // wait回来之后，如果还需要wait，先检查是否有信号未处理
-                            #[cfg(feature = "signal")]
+
                             if current_process().have_signals().is_some() {
                                 return Err(SyscallError::EINTR);
                             }
@@ -339,7 +334,7 @@ pub fn syscall_sleep(args: [usize; 6]) -> SyscallResult {
             };
         }
     }
-    #[cfg(feature = "signal")]
+
     if current_process().have_signals().is_some() {
         return Err(SyscallError::EINTR);
     }
@@ -497,7 +492,7 @@ pub fn syscall_setsid() -> SyscallResult {
         process.get_heap_bottom(),
         process.fd_manager.fd_table.lock().clone(),
     );
-    #[cfg(feature = "signal")]
+
     new_process
         .signal_modules
         .lock()

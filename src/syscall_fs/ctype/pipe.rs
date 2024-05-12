@@ -136,7 +136,7 @@ impl FileIO for Pipe {
             info!("kernel: Pipe::read: loop_read = {}", loop_read);
             if loop_read == 0 {
                 // if current_task().hav
-                #[cfg(feature = "signal")]
+                
                 if axprocess::current_process().have_signals().is_some() {
                     return Err(axerrno::AxError::Interrupted);
                 }

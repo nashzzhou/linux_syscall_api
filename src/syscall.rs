@@ -48,10 +48,7 @@ pub fn syscall(syscall_id: usize, args: [usize; 6]) -> isize {
     }
     let ans = deal_result(ans.unwrap());
     if syscall_id != 96 && syscall_id != 98 {
-        info!(
-            "[syscall] id = {}, args = {:?}, return {}",
-            syscall_id, args, ans
-        );
+        info!("[syscall] id = {},return {}", syscall_id, ans);
     }
     ans
 }

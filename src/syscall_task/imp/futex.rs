@@ -120,7 +120,7 @@ pub fn futex(
                     }
                     // we expect signal_pending(current), but we might be the victim
                     // of a spurious wakeup as well.
-                    #[cfg(feature = "signal")]
+
                     if process.have_signals().is_some() {
                         // 被信号打断
                         return Err(SyscallError::EINTR);

@@ -205,7 +205,7 @@ impl EpollFile {
             }
             yield_now_task();
 
-            #[cfg(feature = "signal")]
+            
             if current_process.have_signals().is_some() {
                 return Err(AxError::Timeout);
             }

@@ -34,6 +34,7 @@ numeric_enum_macro::numeric_enum! {
     #[derive(Eq, PartialEq, Debug, Copy, Clone)]
     pub enum MemSyscallId {
         // mem
+        MREMAP = 25,
         SHMGET = 29,
         SHMCTL = 31,
         SHMAT = 30,

@@ -58,7 +58,7 @@ pub fn syscall_read(args: [usize; 6]) -> SyscallResult {
         // 1. nonblocking socket
         //
         // Normal socket will block while trying to read, so we don't return here.
-        #[cfg(feature = "net")]
+
         if let Some(socket) = file.as_any().downcast_ref::<crate::syscall_net::Socket>() {
             if socket.is_nonblocking() && socket.is_connected() {
                 return Err(SyscallError::EAGAIN);
@@ -129,7 +129,7 @@ pub fn syscall_write(args: [usize; 6]) -> SyscallResult {
         // 1. socket
         //
         // Normal socket will block while trying to write, so we don't return here.
-        #[cfg(feature = "net")]
+
         if let Some(socket) = file.as_any().downcast_ref::<Socket>() {
             if socket.is_nonblocking() && socket.is_connected() {
                 return Err(SyscallError::EAGAIN);

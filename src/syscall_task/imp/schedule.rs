@@ -5,7 +5,7 @@ use axconfig::SMP;
 use axhal::mem::VirtAddr;
 use axprocess::{current_process, current_task, PID2PC, TID2TASK};
 
-// #[cfg(feature = "signal")]
+// 
 use axtask::{SchedPolicy, SchedStatus};
 
 use crate::{SchedParam, SyscallError, SyscallResult};
@@ -40,7 +40,7 @@ pub fn syscall_sched_getaffinity(args: [usize; 6]) -> SyscallResult {
             .lock()
             .iter()
             .find(|task| task.is_leader())
-            .map(Arc::clone)
+            .cloned()
             .unwrap()
     } else if pid == 0 {
         Arc::clone(current_task().as_task_ref())
@@ -93,7 +93,7 @@ pub fn syscall_sched_setaffinity(args: [usize; 6]) -> SyscallResult {
             .lock()
             .iter()
             .find(|task| task.is_leader())
-            .map(Arc::clone)
+            .cloned()
             .unwrap()
     } else if pid == 0 {
         Arc::clone(current_task().as_task_ref())
@@ -115,7 +115,7 @@ pub fn syscall_sched_setaffinity(args: [usize; 6]) -> SyscallResult {
 
     let mask = unsafe { *mask };
 
-    task.set_cpu_set(mask, cpu_set_size);
+    task.set_cpu_set(mask, cpu_set_size, axconfig::SMP);
 
     Ok(0)
 }
@@ -145,7 +145,7 @@ pub fn syscall_sched_setscheduler(args: [usize; 6]) -> SyscallResult {
             .lock()
             .iter()
             .find(|task| task.is_leader())
-            .map(Arc::clone)
+            .cloned()
             .unwrap()
     } else if pid == 0 {
         Arc::clone(current_task().as_task_ref())

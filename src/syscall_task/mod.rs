@@ -27,19 +27,19 @@ pub fn task_syscall(syscall_id: task_syscall_id::TaskSyscallId, args: [usize; 6]
         GETPPID => syscall_getppid(),
         WAIT4 => syscall_wait4(args),
         GETRANDOM => syscall_getrandom(args),
-        #[cfg(feature = "signal")]
+
         SIGSUSPEND => syscall_sigsuspend(args),
-        #[cfg(feature = "signal")]
+
         SIGACTION => syscall_sigaction(args),
-        #[cfg(feature = "signal")]
+
         KILL => syscall_kill(args),
-        #[cfg(feature = "signal")]
+
         TKILL => syscall_tkill(args),
-        #[cfg(feature = "signal")]
+
         TGKILL => syscall_tkill(args),
-        #[cfg(feature = "signal")]
+
         SIGPROCMASK => syscall_sigprocmask(args),
-        #[cfg(feature = "signal")]
+
         SIGRETURN => syscall_sigreturn(),
         EXIT_GROUP => syscall_exit(args),
         SET_TID_ADDRESS => syscall_set_tid_address(args),
@@ -50,11 +50,8 @@ pub fn task_syscall(syscall_id: task_syscall_id::TaskSyscallId, args: [usize; 6]
         GETGID => syscall_getgid(),
         GETEGID => syscall_getegid(),
         GETTID => syscall_gettid(),
-        #[cfg(feature = "futex")]
         FUTEX => syscall_futex(args),
-        #[cfg(feature = "futex")]
         SET_ROBUST_LIST => syscall_set_robust_list(args),
-        #[cfg(feature = "futex")]
         GET_ROBUST_LIST => syscall_get_robust_list(args),
         SYSINFO => syscall_sysinfo(args),
         SETITIMER => syscall_settimer(args),
