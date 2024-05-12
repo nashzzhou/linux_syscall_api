@@ -9,7 +9,7 @@ authors = ["Youjie Zheng <zyj578335934@gmail.com>"]
 [features]
 default = ["monolithic"]
 
-monolithic = []
+monolithic = ["axnet/monolithic"]
 
 ip = ["axnet/ip"]
 net = ["ip"]
