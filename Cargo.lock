@@ -105,8 +105,6 @@ dependencies = [
  "axruntime",
  "axsync",
  "axtask",
- "spinlock",
- "taskctx",
 ]
 
 [[package]]
@@ -250,6 +248,7 @@ dependencies = [
  "axerrno",
  "axhal",
  "axio",
+ "axprocess",
  "axsync",
  "axtask",
  "cfg-if",
