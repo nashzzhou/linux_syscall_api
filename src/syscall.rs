@@ -47,7 +47,7 @@ pub fn syscall(syscall_id: usize, args: [usize; 6]) -> isize {
         panic!("unknown syscall id: {}", syscall_id);
     }
     let ans = deal_result(ans.unwrap());
-    if syscall_id != 96 && syscall_id != 98 {
+    if syscall_id != 96 {
         info!("[syscall] id = {},return {}", syscall_id, ans);
     }
     ans

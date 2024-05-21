@@ -7,7 +7,6 @@ use axhal::time::current_time;
 use axprocess::{
     current_process, current_task, exit_current_task,
     flags::{CloneFlags, WaitStatus},
-    futex::clear_wait,
     link::{deal_with_path, raw_ptr_to_ref_str, AT_FDCWD},
     set_child_tid, sleep_now_task, wait_pid, yield_now_task, Process, PID2PC,
 };
@@ -142,7 +141,7 @@ pub fn syscall_exec(args: [usize; 6]) -> SyscallResult {
     curr_process.set_file_path(path.clone());
 
     // 清空futex信号列表
-    clear_wait(curr_process.pid(), true);
+    // clear_wait(curr_process.pid(), true);
     let argc = args_vec.len();
     if curr_process.exec(path, args_vec, &envs_vec).is_err() {
         exit_current_task(0);
