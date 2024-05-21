@@ -34,7 +34,7 @@ axfs = { git = "https://github.com/Starry-OS/axfs.git" }
 axruntime = { git = "https://github.com/Starry-OS/axruntime.git" }
 axhal = { git = "https://github.com/Starry-OS/axhal.git" }
 axtask = { git = "https://github.com/Starry-OS/axtask.git" }
-axfutex = { git = "https://github.com/YXalix/axfutex.git"}
+axfutex = { git = "https://github.com/nashzzhou/axfutex.git"}
 axnet = { git = "https://github.com/Starry-OS/axnet.git" }
 axprocess = { git = "https://github.com/Starry-OS/axprocess.git" }
 axsignal = { git = "https://github.com/Starry-OS/axsignal.git" }
